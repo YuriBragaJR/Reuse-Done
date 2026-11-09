@@ -1,13 +1,10 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
-
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { Send, MessageSquare, Loader2, User, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
-export default function MensagensPage() {
+function MensagensContent() {
     const searchParams = useSearchParams();
     const itemParam = searchParams.get('item');
     const vendedorParam = searchParams.get('vendedor');
@@ -180,9 +177,8 @@ export default function MensagensPage() {
         }
     };
 
-    // Função para apagar a conversa inteira pela coluna esquerda
     const apagarConversa = async (e: React.MouseEvent, conversaId: string) => {
-        e.stopPropagation(); // Evita selecionar a conversa ao clicar na lixeira
+        e.stopPropagation();
         if (!confirm("Deseja apagar esta conversa e todo o seu histórico?")) return;
 
         try {
@@ -191,7 +187,6 @@ export default function MensagensPage() {
             });
 
             if (res.ok) {
-                // Se a conversa apagada era a que estava aberta, limpa o chat ativo
                 if (conversaAtiva?.id === conversaId) {
                     setConversaAtiva(null);
                     setMensagens([]);
@@ -258,7 +253,6 @@ export default function MensagensPage() {
                                         </div>
                                     </div>
 
-                                    {/* Botão de lixeira na coluna esquerda (aparece ao passar o mouse) */}
                                     <button
                                         onClick={(e) => apagarConversa(e, conv.id)}
                                         className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-2 ml-2 cursor-pointer shrink-0"
@@ -302,22 +296,21 @@ export default function MensagensPage() {
 
                                 return (
                                     <div
-    key={msg.id}
-    className={`flex items-center gap-2 ${minhaMensagem ? 'justify-end' : 'justify-start'}`}
->
-    <div
-        className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm shadow-xs transition-all animate-in zoom-in-95 fade-in duration-200 origin-${minhaMensagem ? 'bottom-right' : 'bottom-left'} ${
-            minhaMensagem
-                ? 'bg-eco-600 text-white rounded-br-xs shadow-eco-600/10'
-                : 'bg-white text-gray-800 border border-gray-200 rounded-bl-xs'
-        }`}
-    >
-        <p className="leading-relaxed">{msg.texto}</p>
-        <span className={`block text-[10px] mt-1 text-right ${minhaMensagem ? 'text-eco-100' : 'text-gray-400'}`}>
-            {new Date(msg.criadoEm).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
-    </div>
-</div>
+                                        key={msg.id}
+                                        className={`flex items-center gap-2 ${minhaMensagem ? 'justify-end' : 'justify-start'}`}
+                                    >
+                                        <div
+                                            className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm shadow-xs transition-all animate-in zoom-in-95 fade-in duration-200 origin-${minhaMensagem ? 'bottom-right' : 'bottom-left'} ${minhaMensagem
+                                                    ? 'bg-eco-600 text-white rounded-br-xs shadow-eco-600/10'
+                                                    : 'bg-white text-gray-800 border border-gray-200 rounded-bl-xs'
+                                                }`}
+                                        >
+                                            <p className="leading-relaxed">{msg.texto}</p>
+                                            <span className={`block text-[10px] mt-1 text-right ${minhaMensagem ? 'text-eco-100' : 'text-gray-400'}`}>
+                                                {new Date(msg.criadoEm).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    </div>
                                 );
                             })}
                             <div ref={messagesEndRef} />
@@ -347,5 +340,17 @@ export default function MensagensPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function MensagensPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex justify-center items-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-eco-600" />
+            </div>
+        }>
+            <MensagensContent />
+        </Suspense>
     );
 }
