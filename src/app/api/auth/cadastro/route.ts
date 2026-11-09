@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
+
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const prisma = globalForPrisma.prisma || new PrismaClient();
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
@@ -10,12 +12,12 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { nome, email, senha } = body;
 
-    // 1. Validação simples para garantir que nada vem vazio
+    // 1. Validação simples
     if (!nome || !email || !senha) {
       return NextResponse.json({ erro: 'Por favor, preencha todos os campos.' }, { status: 400 });
     }
 
-    // 2. Verifica se já existe alguém com este e-mail na Base de Dados
+    // 2. Verifica e-mail existente
     const usuarioExistente = await prisma.user.findUnique({
       where: { email: email }
     });
@@ -24,12 +26,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ erro: 'Este e-mail já está em uso.' }, { status: 400 });
     }
 
-    // 3. Cria o novo utilizador no banco de dados Neon
+    // 3. Cria o utilizador
     const novoUsuario = await prisma.user.create({
       data: {
         nome,
         email,
-        senha, // Nota: Numa aplicação de produção real, encriptaríamos esta senha (ex: usando bcrypt)
+        senha,
       }
     });
 
