@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  createdAt DateTime   @default(now())
+  nome      String
+  senha     String
+  desapegos Desapego[]
+}
+
+model Desapego {
+  id         String     @id @default(uuid())
+  titulo     String
+  descricao  String?
+  criadoEm   DateTime   @default(now())
+  userId     String?
+  categoria  String
+  condicao   String?
+  imagem     String?
+  preco      Float?
+  status     String     @default("ativo")
+  tipo       String?
+  user       User?      @relation(fields: [userId], references: [id])
+  conversas  Conversa[] // <--- ADICIONADO ESTE CAMPO PARA RESOLVER O ERRO
+}
+
+model Conversa {
+  id           String     @id @default(uuid())
+  desapegoId   String
+  compradorId  String
+  vendedorId   String
+  criadoEm     DateTime   @default(now())
+  atualizadoEm DateTime   @updatedAt
+
+  desapego     Desapego   @relation(fields: [desapegoId], references: [id])
+  mensagens    Mensagem[]
+}
+
+model Mensagem {
+  id         String   @id @default(uuid())
+  conversaId String
+  senderId   String   // ID de quem enviou a mensagem
+  texto      String
+  lida       Boolean  @default(false)
+  criadoEm   DateTime @default(now())
+
+  conversa   Conversa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+}
